@@ -30,6 +30,7 @@ class CsvPipeline(object):
         #                                   'p2h_email', 'p3h_name', 'p3h_role', 'p3h_phoneNumber', 'p3h_email',
         #                                   'p1f_name', 'p1f_role', 'p1f_phoneNumber', 'p1f_email', 'p2f_name',
         #                                   'p2f_role', 'p2f_phoneNumber', 'p2f_email']
+        self.exporter.fields_to_export = [ 'title', 'article', 'date' ]
         self.exporter.start_exporting()
 
     def spider_closed(self, spider):

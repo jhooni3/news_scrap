@@ -17,15 +17,16 @@ class NewsSpiderSpider(scrapy.Spider):
             #s_date = input("시작날짜 입력(20190101):")  # 2019.01.01
             #e_date = input("끝날짜 입력(20190428):")  # 2019.04.28
             query = "삼성전자"
-            s_date = '20191201'
+            s_date = '20190101'
             e_date = '20191231'
             maxpage = 10
-            for page in range(maxpage):
-                crawl_url = url + "&q=" + parse.quote(query) + "&sd=" + s_date + "000000" + "&ed=" + e_date + "235959" + "?p=" + str(page)
+            for page in range(1, maxpage+1):
+                crawl_url = url + "&q=" + parse.quote(query) + "&sd=" + s_date + "000000" + "&ed=" + e_date + "235959" + "&p=" + str(page)
                 yield scrapy.Request(url=crawl_url, callback=self.parse_link)
             #time.sleep(5)
 
     def parse_link(self, response):
+
         print('parse_link >>' + '*' * 100)
         for link in response.xpath('//*[@id="clusterResultUL"]/li/div[2]/div/span[1]/a/@href').extract():
             print(link)
@@ -39,16 +40,18 @@ class NewsSpiderSpider(scrapy.Spider):
             #     next_page = response.urljoin(next_page)
             #     yield scrapy.Request(url=next_page, callback=self.parse_news)
 
-
     def parse_news(self, response):
         item = NewsItem()
         print('parse_news >>' + '*' * 100)
         #제목 //*[@id="cSub"]/div/h3
         item['title'] = response.xpath('//*[@id="cSub"]/div/h3/text()').extract()[0]
-        print(response.xpath('//*[@id="cSub"]/div/h3/text()').extract()[0])
+        #print(response.xpath('//*[@id="cSub"]/div[1]/h3/text()').extract()[0])
         #내용 //*[@id="harmonyContainer"]
         item['article'] = response.xpath('//*[@id="harmonyContainer"]/section/p[contains(@dmcf-ptype, "general")]/text()').extract()
-        print(response.xpath('//*[@id="harmonyContainer"]/section/p[contains(@dmcf-ptype, "general")]/text()').extract())
+        #print(response.xpath('//*[@id="harmonyContainer"]/section/p[contains(@dmcf-ptype, "general")]/text()').extract())
+
+        item['date'] = response.xpath('/html/head/meta[contains(@property, "og:regDate")]/@content').extract()[0][:8]
+
         yield item
 
 
@@ -61,7 +64,7 @@ class NewsSpiderSpider(scrapy.Spider):
 #//*[@id="clusterResultUL"]/li[1]/div[2]/div/span[1]/a
 #//*[@id="clusterResultUL"]/li[5]/div[2]/div/span[1]/a
 
-
+#//*[@id="cSub"]/div/span/span
 # //*[@id="resultCntArea"]
 
 #//*[@id="newsColl"]/div[4]/span/span[3]/a
