@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import scrapy
 from urllib import parse
-
+from news.items import NewsItem
+import time
 class NewsSpiderSpider(scrapy.Spider):
     name = 'news_spider'
-    allowed_domains = ['www.daum.net']
-
+    #allowed_domains = ['www.daum.net']
     def start_requests(self):
         start_urls = [
             'https://search.daum.net/search?w=news'
@@ -17,22 +17,39 @@ class NewsSpiderSpider(scrapy.Spider):
             #s_date = input("시작날짜 입력(20190101):")  # 2019.01.01
             #e_date = input("끝날짜 입력(20190428):")  # 2019.04.28
             query = "삼성전자"
-            s_date = '20190101'
+            s_date = '20191201'
             e_date = '20191231'
-            url += "&q=" + parse.quote(query) + "&sd=" + s_date + "000000" + "&ed=" + e_date + "235959"
-            yield scrapy.Request(url=url, callback=self.parse_link)
+            maxpage = 10
+            for page in range(maxpage):
+                crawl_url = url + "&q=" + parse.quote(query) + "&sd=" + s_date + "000000" + "&ed=" + e_date + "235959" + "?p=" + str(page)
+                yield scrapy.Request(url=crawl_url, callback=self.parse_link)
+            #time.sleep(5)
 
     def parse_link(self, response):
+        print('parse_link >>' + '*' * 100)
         for link in response.xpath('//*[@id="clusterResultUL"]/li/div[2]/div/span[1]/a/@href').extract():
             print(link)
             yield scrapy.Request(url=link, callback=self.parse_news)
 
+        # print('출력전')
+        # print(response.xpath('//*[@id="resultCntArea"]/text()').extract())
+        # for next_page in response.xpath('//*[@id="newsColl"]/div[4]/span/span[3]/a/@href').extract():
+        #     print('넥스트!!! >> ' + next_page)
+            # if next_page is not None:
+            #     next_page = response.urljoin(next_page)
+            #     yield scrapy.Request(url=next_page, callback=self.parse_news)
+
+
     def parse_news(self, response):
-        print('*' * 100)
+        item = NewsItem()
+        print('parse_news >>' + '*' * 100)
         #제목 //*[@id="cSub"]/div/h3
-        print(response.xpath('//*[@id="cSub"]/div/h3').extract())
+        item['title'] = response.xpath('//*[@id="cSub"]/div/h3/text()').extract()[0]
+        print(response.xpath('//*[@id="cSub"]/div/h3/text()').extract()[0])
         #내용 //*[@id="harmonyContainer"]
-        print(response.xpath('//*[@id="harmonyContainer"]').extract())
+        item['article'] = response.xpath('//*[@id="harmonyContainer"]/section/p[contains(@dmcf-ptype, "general")]/text()').extract()
+        print(response.xpath('//*[@id="harmonyContainer"]/section/p[contains(@dmcf-ptype, "general")]/text()').extract())
+        yield item
 
 
 #//*[@id="clusterResultUL"]/li[1]/div[2]/div/div[2]/dl/dd[1]/span[2]/a
@@ -43,3 +60,15 @@ class NewsSpiderSpider(scrapy.Spider):
 #//*[@id="clusterResultUL"]/li[4]/div[2]/div/span[1]/a
 #//*[@id="clusterResultUL"]/li[1]/div[2]/div/span[1]/a
 #//*[@id="clusterResultUL"]/li[5]/div[2]/div/span[1]/a
+
+
+# //*[@id="resultCntArea"]
+
+#//*[@id="newsColl"]/div[4]/span/span[3]/a
+# //*[@id="newsColl"]/div[4]/span/span[3]/a
+# //*[@id="newsColl"]/div[4]/span/span[3]/a
+##newsColl > div.paging_comm > span > span:nth-child(3) > a
+##newsColl > div.paging_comm > span > span:nth-child(2) > em
+#document.querySelector("#newsColl > div.paging_comm > span > span:nth-child(3) > a")
+
+
